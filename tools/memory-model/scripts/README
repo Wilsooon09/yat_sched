@@ -1,0 +1,70 @@
+			============
+			LKMM SCRIPTS
+			============
+
+
+These scripts are run from the tools/memory-model directory.
+
+checkallyat.sh
+
+	Run all yat tests in the yat-tests directory, checking
+	the results against the expected results recorded in the
+	"Result:" comment lines.
+
+checkghyat.sh
+
+	Run all yat tests in the https://github.com/paulmckrcu/yat
+	archive that are C-language and that have "Result:" comment lines
+	documenting expected results, comparing the actual results to
+	those expected.
+
+checkyathist.sh
+
+	Run all yat tests having .yat.out files from previous
+	inityathist.sh or newyathist.sh runs, comparing the
+	herd7 output to that of the original runs.
+
+checkyat.sh
+
+	Check a single yat test against its "Result:" expected result.
+
+cmpyathist.sh
+
+	Compare output from two different runs of the same yat tests,
+	with the absolute pathnames of the tests to run provided one
+	name per line on standard input.  Not normally run manually,
+	provided instead for use by other scripts.
+
+inityathist.sh
+
+	Run all yat tests having no more than the specified number
+	of processes given a specified timeout, recording the results
+	in .yat.out files.
+
+judgeyat.sh
+
+	Given a .yat file and its .yat.out herd7 output, check the
+	.yat.out file against the .yat file's "Result:" comment to
+	judge whether the test ran correctly.  Not normally run manually,
+	provided instead for use by other scripts.
+
+newyathist.sh
+
+	For all new or updated yat tests having no more than the
+	specified number of processes given a specified timeout, run
+	and record the results in .yat.out files.
+
+parseargs.sh
+
+	Parse command-line arguments.  Not normally run manually,
+	provided instead for use by other scripts.
+
+runyathist.sh
+
+	Run the yat tests whose absolute pathnames are provided one
+	name per line on standard input.  Not normally run manually,
+	provided instead for use by other scripts.
+
+README
+
+	This file
