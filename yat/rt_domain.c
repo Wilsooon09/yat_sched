@@ -1,9 +1,8 @@
 /*
  * yat/rt_domain.c
  *
- * YAT real-time infrastructure. This file contains the
- * functions that manipulate RT domains. RT domains are an abstraction
- * of a ready queue and a release queue.
+ * YAT real-time infrastructure. This file contains the functions that manipulate RT domains. RT domains are an abstraction of a ready queue and a release queue.
+ * 该文件包含操作实时域的函数。实时域是就绪队列和发布队列的抽象。
  */
 
 #include <linux/percpu.h>
@@ -295,10 +294,10 @@ void rt_domain_init(rt_domain_t *rt,
 
 	rt->check_resched 	= check;
 	rt->release_jobs	= release;
-	rt->order		= order;
+	rt->order		    = order;
 }
 
-/* add_ready - add a real-time task to the rt ready queue. It must be runnable.
+/* add_ready - add a real-time task to the rt ready queue. It must be runnable. 将实时任务添加到 RT 准备队列中。它必须是可运行的。
  * @new:       the newly released task
  */
 void __add_ready(rt_domain_t* rt, struct task_struct *new)
@@ -315,7 +314,7 @@ void __add_ready(rt_domain_t* rt, struct task_struct *new)
 	rt->check_resched(rt);
 }
 
-/* merge_ready - Add a sorted set of tasks to the rt ready queue. They must be runnable.
+/* merge_ready - Add a sorted set of tasks to the rt ready queue. They must be runnable. 将一组排序好的任务添加到 rt 就绪队列。它们必须是可运行的。
  * @tasks      - the newly released tasks
  */
 void __merge_ready(rt_domain_t* rt, struct bheap* tasks)
@@ -338,7 +337,7 @@ void __add_release_on(rt_domain_t* rt, struct task_struct *task,
 }
 #endif
 
-/* add_release - add a real-time task to the rt release queue.
+/* add_release - add a real-time task to the rt release queue. 将实时任务添加到 rt 发布队列中。
  * @task:        the sleeping task
  */
 void __add_release(rt_domain_t* rt, struct task_struct *task)

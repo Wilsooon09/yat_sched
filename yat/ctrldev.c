@@ -118,7 +118,7 @@ static int yat_ctrl_mmap(struct file* filp, struct vm_area_struct* vma)
 	return err;
 }
 
-/* YAT^RT system calls */
+/* 系统调用(共 13 个) */
 
 asmlinkage long sys_set_rt_task_param(pid_t pid, struct rt_task __user * param);
 asmlinkage long sys_get_rt_task_param(pid_t pid, struct rt_task __user * param);

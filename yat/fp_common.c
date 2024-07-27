@@ -15,8 +15,7 @@
 
 #include <yat/fp_common.h>
 
-/* fp_higher_prio -  returns true if first has a higher static priority
- *                   than second. Ties are broken by PID.
+/* fp_higher_prio -  returns true if first has a higher static priority than second. Ties are broken by PID.
  *
  * both first and second may be NULL
  */
@@ -42,8 +41,7 @@ int fp_higher_prio(struct task_struct* first,
 
 #ifdef CONFIG_YAT_LOCKING
 
-	/* Check for inherited priorities. Change task
-	 * used for comparison in such a case.
+	/* Check for inherited priorities. Change task used for comparison in such a case.
 	 */
 	if (unlikely(first->rt_param.inh_task))
 		first_task = first->rt_param.inh_task;
@@ -100,7 +98,7 @@ void fp_domain_init(rt_domain_t* rt, check_resched_needed_t resched,
 	rt_domain_init(rt,  fp_ready_order, resched, release);
 }
 
-/* need_to_preempt - check whether the task t needs to be preempted
+/* need_to_preempt - check whether the task t needs to be preempted 检查任务 t 是否需要被抢占
  */
 int fp_preemption_needed(struct fp_prio_queue *q, struct task_struct *t)
 {

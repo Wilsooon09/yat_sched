@@ -1,6 +1,6 @@
 /*
- * yat.c -- Implementation of the YAT syscalls,
- *             the YAT intialization code,
+ * yat.c -- 实现 of the YAT 系统调用,
+ *             the YAT 初始化代码,
  *             and the procfs interface..
  */
 #include <linux/interrupt.h>
@@ -34,7 +34,7 @@
 #include <trace/events/yat.h>
 #endif
 
-/* Number of RT tasks that exist in the system */
+/* 系统中当前存在的实时任务数 */
 atomic_t rt_task_count 		= ATOMIC_INIT(0);
 
 #ifdef CONFIG_RELEASE_MASTER
@@ -123,24 +123,22 @@ void cancel_non_preemption_budget_timer(struct task_struct* t) {
 
 
 /*
- * sys_set_task_rt_param
+ * sys_set_task_rt_param 设置任务的实时参数
  * @pid: Pid of the task which scheduling parameters must be changed
  * @param: New real-time extension parameters such as the execution cost and
  *         period
  * Syscall for manipulating with task rt extension params
  * Returns EFAULT  if param is NULL.
- *         ESRCH   if pid is not corrsponding
- *	           to a valid task.
- *	   EINVAL  if either period or execution cost is <=0
- *	   EPERM   if pid is a real-time task
- *	   0       if success
+ *         ESRCH   if pid is not corrsponding to a valid task.
+ *	       EINVAL  if either period or execution cost is <=0
+ *	       EPERM   if pid is a real-time task
+ *	       0       if success 成功
  *
- * Only non-real-time tasks may be configured with this system call
- * to avoid races with the scheduler. In practice, this means that a
- * task's parameters must be set _before_ calling sys_prepare_rt_task()
+ * Only non-real-time tasks may be configured with this system call to avoid races with the scheduler.
+ * 只有非实时任务能被配置
+ * In practice, this means that a task's parameters must be set _before_ calling sys_prepare_rt_task()
  *
- * find_task_by_vpid() assumes that we are in the same namespace of the
- * target.
+ * find_task_by_vpid() assumes that we are in the same namespace of the target.
  */
 asmlinkage long sys_set_rt_task_param(pid_t pid, struct rt_task __user * param)
 {
@@ -203,10 +201,7 @@ asmlinkage long sys_set_rt_task_param(pid_t pid, struct rt_task __user * param)
 	}
 
 	if (is_realtime(target)) {
-		/* The task is already a real-time task.
-		 * Let plugin decide whether it wants to support
-		 * parameter changes at runtime.
-		 */
+		/* 若该任务已经是一个实时任务: 让插件决定是否支持运行时参数更改 */
 		retval = yat->task_change_params(target, &tp);
 	} else {
 		target->rt_param.task_params = tp;
@@ -273,8 +268,7 @@ asmlinkage long sys_set_rt_task_param(pid_t pid, struct rt_task __user * param)
  *   returns ESRCH  if pid does not correspond to a valid task
  *   returns EFAULT if copying of parameters has failed.
  *
- *   find_task_by_vpid() assumes that we are in the same namespace of the
- *   target.
+ *   find_task_by_vpid() assumes that we are in the same namespace of the target.
  */
 asmlinkage long sys_get_rt_task_param(pid_t pid, struct rt_task __user * param)
 {
@@ -558,12 +552,12 @@ void yat_plugin_switch_enable(void)
 	up_read(&plugin_switch_mutex);
 }
 
+// 调度器变更
 static int __do_plugin_switch(struct sched_plugin* plugin)
 {
 	int ret;
 
-
-	/* don't switch if there are active real-time tasks */
+	/* 如果存在正在活动的实时任务，则不能进行切换 */
 	if (atomic_read(&rt_task_count) == 0) {
 		TRACE("deactivating plugin %s\n", yat->plugin_name);
 		ret = yat->deactivate_plugin();
@@ -578,7 +572,7 @@ static int __do_plugin_switch(struct sched_plugin* plugin)
 			plugin = &linux_sched_plugin;
 		}
 
-		printk(KERN_INFO "Switching to YAT^RT plugin %s.\n", plugin->plugin_name);
+		printk(KERN_INFO "Switching to yat_sched plugin %s.\n", plugin->plugin_name);
 		yat = plugin;
 	} else
 		ret = -EBUSY;

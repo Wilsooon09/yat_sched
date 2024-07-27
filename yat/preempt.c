@@ -85,8 +85,8 @@ void yat_reschedule(int cpu)
 			cpu, TASK_SCHEDULED, SHOULD_SCHEDULE);
 	}
 
-	/* If the CPU was in state TASK_SCHEDULED, then we need to cause the
-	 * scheduler to be invoked. */
+	/* If the CPU was in state TASK_SCHEDULED, then we need to cause the scheduler to be invoked. */
+	// 如果 CPU 处于状态 TASK_SCHEDULED, 那么我们需要调用调度器。
 	if (scheduled_transition_ok) {
 		if (smp_processor_id() == cpu) {
 			set_tsk_need_resched(current);

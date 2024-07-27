@@ -720,8 +720,7 @@ int mrsp_fmlp_lock(struct yat_lock* l) {
 
 		__add_wait_queue_entry_tail_exclusive(&sem->wait, &wait);
 
-		TS_LOCK_SUSPEND
-		;
+		TS_LOCK_SUSPEND;
 
 		/* release lock before sleeping */
 		spin_unlock_irqrestore(&sem->wait.lock, flags);
@@ -733,8 +732,7 @@ int mrsp_fmlp_lock(struct yat_lock* l) {
 
 		schedule();
 
-		TS_LOCK_RESUME
-		;
+		TS_LOCK_RESUME;
 
 		/* Since we hold the lock, no other task will change
 		 * ->owner. We can thus check it without acquiring the spin
@@ -758,8 +756,7 @@ int mrsp_fmlp_unlock(struct yat_lock* l) {
 	unsigned long flags;
 	int err = 0;
 
-	preempt_disable()
-	;
+	preempt_disable();
 
 	spin_lock_irqsave(&sem->wait.lock, flags);
 
@@ -785,8 +782,7 @@ int mrsp_fmlp_unlock(struct yat_lock* l) {
 		wake_up_process(next);
 	}
 
-	preempt_enable()
-	;
+	preempt_enable();
 
 	return err;
 }
@@ -884,19 +880,15 @@ static void mpcp_vspin_enter(void) {
 
 			spin_unlock_irqrestore(&vspin->lock, flags);
 
-			TS_LOCK_SUSPEND
-			;
+			TS_LOCK_SUSPEND;
 
-			preempt_enable_no_resched()
-			;
+			preempt_enable_no_resched();
 
 			schedule();
 
-			preempt_disable()
-			;
+			preempt_disable();
 
-			TS_LOCK_RESUME
-			;
+			TS_LOCK_RESUME;
 			/* Recheck if we got it --- some higher-priority process might
 			 * have swooped in. */
 		}
@@ -943,8 +935,7 @@ int mrsp_mpcp_lock(struct yat_lock* l) {
 	tsk_rt(t)->num_local_locks_held)
 		return -EBUSY;
 
-	preempt_disable()
-	;
+	preempt_disable();
 
 	if (sem->vspin)
 		mpcp_vspin_enter();
@@ -956,8 +947,7 @@ int mrsp_mpcp_lock(struct yat_lock* l) {
 
 	spin_lock_irqsave(&sem->wait.lock, flags);
 
-	preempt_enable_no_resched()
-	;
+	preempt_enable_no_resched();
 
 	if (sem->owner) {
 		/* resource is not free => must suspend and wait */
@@ -984,8 +974,7 @@ int mrsp_mpcp_lock(struct yat_lock* l) {
 
 		schedule();
 
-		TS_LOCK_RESUME
-		;
+		TS_LOCK_RESUME;
 
 		/* Since we hold the lock, no other task will change
 		 * ->owner. We can thus check it without acquiring the spin
@@ -1009,8 +998,7 @@ int mrsp_mpcp_unlock(struct yat_lock* l) {
 	unsigned long flags;
 	int err = 0;
 
-	preempt_disable()
-	;
+	preempt_disable();
 
 	spin_lock_irqsave(&sem->wait.lock, flags);
 
@@ -1039,8 +1027,7 @@ int mrsp_mpcp_unlock(struct yat_lock* l) {
 		mpcp_vspin_exit();
 	}
 
-	preempt_enable()
-	;
+	preempt_enable();
 
 	return err;
 }
@@ -1257,19 +1244,15 @@ static void pcp_raise_ceiling(struct pcp_semaphore* sem, int effective_prio) {
 			pcp_priority_inheritance();
 		}
 
-		TS_LOCK_SUSPEND
-		;
+		TS_LOCK_SUSPEND;
 
-		preempt_enable_no_resched()
-		;
+		preempt_enable_no_resched();
 		schedule();
-		preempt_disable()
-		;
+		preempt_disable();
 
 		/* pcp_resume_unblocked() removed us from wait queue */
 
-		TS_LOCK_RESUME
-		;
+		TS_LOCK_RESUME;
 	}
 
 	TRACE_CUR("PCP got the ceiling and sem %p\n", sem);
@@ -1375,13 +1358,11 @@ int mrsp_pcp_lock(struct yat_lock* l) {
 	if (tsk_rt(t)->num_locks_held)
 		return -EBUSY;
 
-	preempt_disable()
-	;
+	preempt_disable();
 
 	pcp_raise_ceiling(sem, eprio);
 
-	preempt_enable()
-	;
+	preempt_enable();
 
 	tsk_rt(t)->num_local_locks_held++;
 
@@ -1394,8 +1375,7 @@ int mrsp_pcp_unlock(struct yat_lock* l) {
 
 	int err = 0;
 
-	preempt_disable()
-	;
+	preempt_disable();
 
 	if (sem->owner != t) {
 		err = -EINVAL;
@@ -1424,8 +1404,7 @@ int mrsp_pcp_unlock(struct yat_lock* l) {
 	pcp_lower_ceiling(sem);
 
 	out:
-	preempt_enable()
-	;
+	preempt_enable();
 
 	return err;
 }
@@ -1464,14 +1443,12 @@ int mrsp_pcp_close(struct yat_lock* l) {
 
 	int owner = 0;
 
-	preempt_disable()
-	;
+	preempt_disable();
 
 	if (sem->on_cpu == smp_processor_id())
 		owner = sem->owner == t;
 
-	preempt_enable()
-	;
+	preempt_enable();
 
 	if (owner)
 		mrsp_pcp_unlock(l);
@@ -1527,8 +1504,7 @@ static void mrsp_migrate_to(int target_cpu) {
 	/* make sure target_cpu makes sense */
 	BUG_ON(target_cpu >= NR_CPUS || !cpu_online(target_cpu));
 
-	local_irq_disable()
-	;
+	local_irq_disable();
 
 	from = task_pfp(t);
 	raw_spin_lock(&from->slock);
@@ -1545,24 +1521,19 @@ static void mrsp_migrate_to(int target_cpu) {
 	/* Don't trace scheduler costs as part of
 	 * locking overhead. Scheduling costs are accounted for
 	 * explicitly. */
-	TS_LOCK_SUSPEND
-	;
+	TS_LOCK_SUSPEND;
 
-	local_irq_enable()
-	;
-	preempt_enable_no_resched()
-	;
+	local_irq_enable();
+	preempt_enable_no_resched();
 
 	/* deschedule to be migrated */
 	schedule();
 
 	/* we are now on the target processor */
-	preempt_disable()
-	;
+	preempt_disable();
 
 	/* start recording costs again */
-	TS_LOCK_RESUME
-	;
+	TS_LOCK_RESUME;
 
 	BUG_ON(smp_processor_id() != target_cpu && is_realtime(t));
 }
@@ -1582,8 +1553,7 @@ int mrsp_dpcp_lock(struct yat_lock* l) {
 	tsk_rt(t)->num_local_locks_held)
 		return -EBUSY;
 
-	preempt_disable()
-	;
+	preempt_disable();
 
 	/* Priority-boost ourself *before* we suspend so that
 	 * our priority is boosted when we resume. */
@@ -1597,8 +1567,7 @@ int mrsp_dpcp_lock(struct yat_lock* l) {
 	/* yep, we got it => execute request */
 	sem->owner_cpu = from;
 
-	preempt_enable()
-	;
+	preempt_enable();
 
 	tsk_rt(t)->num_locks_held++;
 
@@ -1611,8 +1580,7 @@ int mrsp_dpcp_unlock(struct yat_lock* l) {
 	int err = 0;
 	int home;
 
-	preempt_disable()
-	;
+	preempt_disable();
 
 	if (sem->pcp.owner != t) {
 		err = -EINVAL;
@@ -1626,11 +1594,14 @@ int mrsp_dpcp_unlock(struct yat_lock* l) {
 	 * scheduler and we just have to deal with it. */
 	if (unlikely(!is_realtime(t) && sem->pcp.on_cpu != smp_processor_id())) {
 		TRACE_TASK(t, "DPCP unlock cpu=%d, sem->pcp.on_cpu=%d\n", smp_processor_id(), sem->pcp.on_cpu);
-		preempt_enable()
-		;
+
+		preempt_enable();
+
 		err = yat_be_migrate_to(sem->pcp.on_cpu);
-		preempt_disable()
-		;TRACE_TASK(t, "post-migrate: cpu=%d, sem->pcp.on_cpu=%d err=%d\n", smp_processor_id(), sem->pcp.on_cpu, err);
+
+		preempt_disable();
+
+		TRACE_TASK(t, "post-migrate: cpu=%d, sem->pcp.on_cpu=%d err=%d\n", smp_processor_id(), sem->pcp.on_cpu, err);
 	}
 	BUG_ON(sem->pcp.on_cpu != smp_processor_id());
 	err = 0;
@@ -1648,8 +1619,7 @@ int mrsp_dpcp_unlock(struct yat_lock* l) {
 	mrsp_migrate_to(home);
 
 	out:
-	preempt_enable()
-	;
+	preempt_enable();
 
 	return err;
 }
@@ -1682,14 +1652,12 @@ int mrsp_dpcp_close(struct yat_lock* l) {
 	struct dpcp_semaphore *sem = dpcp_from_lock(l);
 	int owner = 0;
 
-	preempt_disable()
-	;
+	preempt_disable();
 
 	if (sem->pcp.on_cpu == smp_processor_id())
 		owner = sem->pcp.owner == t;
 
-	preempt_enable()
-	;
+	preempt_enable();
 
 	if (owner)
 		mrsp_dpcp_unlock(l);
@@ -1701,8 +1669,13 @@ void mrsp_dpcp_free(struct yat_lock* lock) {
 	kfree(dpcp_from_lock(lock));
 }
 
-static struct yat_lock_ops mrsp_dpcp_lock_ops = { .close = mrsp_dpcp_close, .lock = mrsp_dpcp_lock, .open = mrsp_dpcp_open, .unlock = mrsp_dpcp_unlock,
-	.deallocate = mrsp_dpcp_free, };
+static struct yat_lock_ops mrsp_dpcp_lock_ops = {
+	.close      = mrsp_dpcp_close,
+	.lock       = mrsp_dpcp_lock,
+	.open       = mrsp_dpcp_open,
+	.unlock     = mrsp_dpcp_unlock,
+	.deallocate = mrsp_dpcp_free,
+};
 
 static struct yat_lock* mrsp_new_dpcp(int on_cpu) {
 	struct dpcp_semaphore* sem;
@@ -1755,8 +1728,7 @@ int mrsp_dflp_lock(struct yat_lock* l) {
 	tsk_rt(t)->num_local_locks_held)
 		return -EBUSY;
 
-	preempt_disable()
-	;
+	preempt_disable();
 
 	/* tie-break by this point in time */
 	time_of_request = yat_clock();
@@ -1782,8 +1754,7 @@ int mrsp_dflp_lock(struct yat_lock* l) {
 
 		__add_wait_queue_entry_tail_exclusive(&sem->wait, &wait);
 
-		TS_LOCK_SUSPEND
-		;
+		TS_LOCK_SUSPEND;
 
 		/* release lock before sleeping */
 		spin_unlock_irqrestore(&sem->wait.lock, flags);
@@ -1793,16 +1764,13 @@ int mrsp_dflp_lock(struct yat_lock* l) {
 		 * there is only one wake up per release.
 		 */
 
-		preempt_enable_no_resched()
-		;
+		preempt_enable_no_resched();
 
 		schedule();
 
-		preempt_disable()
-		;
+		preempt_disable();
 
-		TS_LOCK_RESUME
-		;
+		TS_LOCK_RESUME;
 
 		/* Since we hold the lock, no other task will change
 		 * ->owner. We can thus check it without acquiring the spin
@@ -1817,8 +1785,7 @@ int mrsp_dflp_lock(struct yat_lock* l) {
 
 	sem->owner_cpu = from;
 
-	preempt_enable()
-	;
+	preempt_enable();
 
 	tsk_rt(t)->num_locks_held++;
 
@@ -1832,8 +1799,7 @@ int mrsp_dflp_unlock(struct yat_lock* l) {
 	int home;
 	unsigned long flags;
 
-	preempt_disable()
-	;
+	preempt_disable();
 
 	spin_lock_irqsave(&sem->wait.lock, flags);
 
@@ -1867,8 +1833,7 @@ int mrsp_dflp_unlock(struct yat_lock* l) {
 	mrsp_migrate_to(home);
 
 	out:
-	preempt_enable()
-	;
+	preempt_enable();
 
 	return err;
 }
@@ -1892,14 +1857,12 @@ int mrsp_dflp_close(struct yat_lock* l) {
 	struct dflp_semaphore *sem = dflp_from_lock(l);
 	int owner = 0;
 
-	preempt_disable()
-	;
+	preempt_disable();
 
 	if (sem->on_cpu == smp_processor_id())
 		owner = sem->owner == t;
 
-	preempt_enable()
-	;
+	preempt_enable();
 
 	if (owner)
 		mrsp_dflp_unlock(l);
@@ -1911,8 +1874,13 @@ void mrsp_dflp_free(struct yat_lock* lock) {
 	kfree(dflp_from_lock(lock));
 }
 
-static struct yat_lock_ops mrsp_dflp_lock_ops = { .close = mrsp_dflp_close, .lock = mrsp_dflp_lock, .open = mrsp_dflp_open, .unlock = mrsp_dflp_unlock,
-	.deallocate = mrsp_dflp_free, };
+static struct yat_lock_ops mrsp_dflp_lock_ops = {
+	.close      = mrsp_dflp_close,
+	.lock       = mrsp_dflp_lock,
+	.open       = mrsp_dflp_open,
+	.unlock     = mrsp_dflp_unlock,
+	.deallocate = mrsp_dflp_free,
+};
 
 static struct yat_lock* mrsp_new_dflp(int on_cpu) {
 	struct dflp_semaphore* sem;
@@ -1959,8 +1927,7 @@ struct task_list * task_remove(struct task_struct* task, struct list_head *head)
 	struct list_head *iter;
 	struct task_list *objPtr;
 
-	list_for_each(iter, head)
-	{
+	list_for_each(iter, head){
 		objPtr = list_entry(iter, struct task_list, next);
 		if (objPtr->task == task) {
 			list_del(&objPtr->next);
@@ -1986,8 +1953,7 @@ int get_ceiling_priority(struct task_struct* t) {
 	return ceiling;
 }
 
-static inline struct mrsp_semaphore*
-mrsp_from_lock(struct yat_lock* lock) {
+static inline struct mrsp_semaphore* mrsp_from_lock(struct yat_lock* lock) {
 	return container_of(lock, struct mrsp_semaphore, yat_lock);
 }
 
@@ -2006,8 +1972,7 @@ int mrsp_lock(struct yat_lock* l) {
 		return -EINVAL;
 
 	/* add to the request queue and hold to reference of the requesting lock. */
-	preempt_disable()
-	;
+	preempt_disable();
 	spin_lock_irqsave(&sem->lock, flags);
 
 	if (t->rt_param.task_params.helper == NULL) {
@@ -2021,8 +1986,8 @@ int mrsp_lock(struct yat_lock* l) {
 	t->rt_param.task_params.requesting_lock = sem;
 
 	spin_unlock_irqrestore(&sem->lock, flags);
-	preempt_enable()
-	;
+
+	preempt_enable();
 
 	/*Spinning for the lock.*/
 	while (1) {
@@ -2034,8 +1999,7 @@ int mrsp_lock(struct yat_lock* l) {
 			break;
 		}
 
-		preempt_disable()
-		;
+		preempt_disable();
 
 		spin_lock_irqsave(&sem->lock, flags);
 
@@ -2095,8 +2059,7 @@ int mrsp_lock(struct yat_lock* l) {
 					spin_unlock(next_lock);
 					raw_spin_unlock(&next_head_domain->slock);
 					spin_unlock_irqrestore(&sem->lock, flags);
-					preempt_enable()
-					;
+					preempt_enable();
 				} else {
 					mrsp_domain_t *ori = remote_pfp(next_head->rt_param.task_params.original_cpu);
 
@@ -2109,16 +2072,14 @@ int mrsp_lock(struct yat_lock* l) {
 					spin_unlock(next_lock);
 					raw_spin_unlock(&next_head_domain->slock);
 					spin_unlock_irqrestore(&sem->lock, flags);
-					preempt_enable()
-					;
+					preempt_enable();
 				}
 
 			} else {
 				spin_unlock(next_lock);
 				raw_spin_unlock(&next_head_domain->slock);
 				spin_unlock_irqrestore(&sem->lock, flags);
-				preempt_enable()
-				;
+				preempt_enable();
 			}
 
 			if (next_head != NULL && t->rt_param.task_params.enable_help && next_head->rt_param.task_params.preempted == 1) {
@@ -2126,8 +2087,7 @@ int mrsp_lock(struct yat_lock* l) {
 			}
 		} else {
 			spin_unlock_irqrestore(&sem->lock, flags);
-			preempt_enable()
-			;
+			preempt_enable();
 		}
 	}
 	return 0;
@@ -2147,8 +2107,8 @@ int mrsp_unlock(struct yat_lock* l) {
 	}
 
 	/* set our status to "has nothing to do with the lock". */
-	preempt_disable()
-	;
+	preempt_disable();
+
 	spin_lock_irqsave(&sem->lock, flags);
 
 	next = list_entry((sem->tasks_queue->next.next), struct task_list, next);
@@ -2185,8 +2145,7 @@ int mrsp_unlock(struct yat_lock* l) {
 		atomic_inc(&sem->owner_ticket);
 
 		spin_unlock_irqrestore(&sem->lock, flags);
-		preempt_enable()
-		;
+		preempt_enable();
 		schedule();
 	}
 	/* the task is not being helped at all */
@@ -2199,8 +2158,7 @@ int mrsp_unlock(struct yat_lock* l) {
 		atomic_inc(&sem->owner_ticket);
 
 		spin_unlock_irqrestore(&sem->lock, flags);
-		preempt_enable()
-		;
+		preempt_enable();
 	} else {
 		if (t->rt_param.task_params.num_mrsp_locks == 0) {
 			int migrate = 0;
@@ -2224,14 +2182,12 @@ int mrsp_unlock(struct yat_lock* l) {
 			atomic_inc(&sem->owner_ticket);
 
 			spin_unlock_irqrestore(&sem->lock, flags);
-			preempt_enable()
-			;
+			preempt_enable();
 			schedule();
 		} else {
 			atomic_inc(&sem->owner_ticket);
 			spin_unlock_irqrestore(&sem->lock, flags);
-			preempt_enable()
-			;
+			preempt_enable();
 		}
 
 	}
@@ -2311,8 +2267,7 @@ new_mrsp(int* config) {
  -------------------------- MSRP Support --------------------------
  --------------------------------------------------------------- */
 
-static inline struct msrp_semaphore*
-msrp_from_lock(struct yat_lock* lock) {
+static inline struct msrp_semaphore* msrp_from_lock(struct yat_lock* lock) {
 	return container_of(lock, struct msrp_semaphore, yat_lock);
 }
 
@@ -2329,8 +2284,8 @@ int msrp_lock(struct yat_lock* l) {
 		return -EINVAL;
 
 	/* add to the request queue and hold to reference of the requesting lock. */
-	preempt_disable()
-	;
+	preempt_disable();
+
 	spin_lock_irqsave(&sem->lock, flags);
 
 	ticket = atomic_read(&sem->next_ticket);
@@ -2338,6 +2293,7 @@ int msrp_lock(struct yat_lock* l) {
 	t->rt_param.task_params.priority = 0;
 
 	spin_unlock_irqrestore(&sem->lock, flags);
+
 	preempt_enable();
 
 	//t->rt_param.task_params.original_cpu = get_partition(t);
@@ -2369,8 +2325,8 @@ int msrp_unlock(struct yat_lock* l) {
 	}
 
 	/* set our status to "has nothing to do with the lock". */
-	preempt_disable()
-	;
+	preempt_disable();
+
 	spin_lock_irqsave(&sem->lock, flags);
 
 	/* at this point the next task is able to get the lock unless being preempted or helping. */
@@ -2384,8 +2340,8 @@ int msrp_unlock(struct yat_lock* l) {
 	atomic_inc(&sem->owner_ticket);
 
 	spin_unlock_irqrestore(&sem->lock, flags);
-	preempt_enable()
-	;
+
+	preempt_enable();
 
 	out: return err;
 
@@ -2416,10 +2372,16 @@ void msrp_free(struct yat_lock* lock) {
 	kfree(sem);
 }
 
-static struct yat_lock_ops msrp_lock_ops = { .close = msrp_close, .lock = msrp_lock, .open = msrp_open, .unlock = msrp_unlock, .deallocate = msrp_free, };
+static struct yat_lock_ops msrp_lock_ops = {
+	.close      = msrp_close,
+	.lock       = msrp_lock,
+	.open       = msrp_open,
+	.unlock     = msrp_unlock,
+	.deallocate = msrp_free,
+};
 
-static struct yat_lock*
-new_msrp(int* config) {
+static struct yat_lock* new_msrp(int* config) {
+
 	struct msrp_semaphore* sem;
 	sem = kmalloc(sizeof(*sem), GFP_KERNEL);
 
@@ -2450,6 +2412,7 @@ new_msrp(int* config) {
  -------------------------- FIFOP Support --------------------------
  --------------------------------------------------------------- */
 static inline struct fifop_semaphore*
+
 fifop_from_lock(struct yat_lock* lock) {
 	return container_of(lock, struct fifop_semaphore, yat_lock);
 }
@@ -2471,8 +2434,8 @@ int fifop_lock(struct yat_lock* l) {
 
 	enter: t->rt_param.task_params.need_re_request = 0;
 	/* add to the request queue and hold to reference of the requesting lock. */
-	preempt_disable()
-	;
+	preempt_disable();
+
 	spin_lock_irqsave(&sem->lock, flags);
 
 	add_task(taskPtr, t, &(sem->tasks_queue->next));
@@ -2480,8 +2443,8 @@ int fifop_lock(struct yat_lock* l) {
 	t->rt_param.task_params.next = &taskPtr->next;
 
 	spin_unlock_irqrestore(&sem->lock, flags);
-	preempt_enable()
-	;
+
+	preempt_enable();
 
 	/*Spinning for the lock.*/
 	while (!goout) {
@@ -2489,8 +2452,8 @@ int fifop_lock(struct yat_lock* l) {
 			goto enter;
 		}
 
-		preempt_disable()
-		;
+		preempt_disable();
+
 		spin_lock_irqsave(&sem->lock, flags);
 
 		next = list_entry((sem->tasks_queue->next.next), struct task_list, next);
@@ -2506,8 +2469,8 @@ int fifop_lock(struct yat_lock* l) {
 		}
 
 		spin_unlock_irqrestore(&sem->lock, flags);
-		preempt_enable()
-		;
+
+		preempt_enable();
 
 	}
 	return 0;
@@ -2526,8 +2489,8 @@ int fifop_unlock(struct yat_lock* l) {
 	}
 
 	/* set our status to "has nothing to do with the lock". */
-	preempt_disable()
-	;
+	preempt_disable();
+
 	spin_lock_irqsave(&sem->lock, flags);
 
 	/* at this point the next task is able to get the lock unless being preempted or helping. */
@@ -2541,8 +2504,9 @@ int fifop_unlock(struct yat_lock* l) {
 	my_obj = task_remove(t, &(sem->tasks_queue->next));
 
 	spin_unlock_irqrestore(&sem->lock, flags);
-	preempt_enable()
-	;
+
+	preempt_enable();
+
 	kfree(my_obj);
 
 	out: return err;
@@ -2574,8 +2538,13 @@ void fifop_free(struct yat_lock* lock) {
 
 }
 
-static struct yat_lock_ops fifop_lock_ops =
-	{ .close = fifop_close, .lock = fifop_lock, .open = fifop_open, .unlock = fifop_unlock, .deallocate = fifop_free, };
+static struct yat_lock_ops fifop_lock_ops = {
+	.close      = fifop_close,
+	.lock       = fifop_lock,
+	.open       = fifop_open,
+	.unlock     = fifop_unlock,
+	.deallocate = fifop_free,
+};
 
 static struct yat_lock*
 new_fifop(int* config) {
@@ -2843,11 +2812,11 @@ static long mrsp_deactivate_plugin(void) {
 static struct sched_plugin mrsp_plugin __cacheline_aligned_in_smp = {
 	.plugin_name          = "FPFPS_RS",
 	.task_new             = mrsp_task_new,
-	.complete_job         = complete_job,
 	.task_exit            = mrsp_task_exit,
-	.schedule             = mrsp_schedule,
 	.task_wake_up         = mrsp_task_wake_up,
 	.task_block           = mrsp_task_block,
+	.complete_job         = complete_job,
+	.schedule             = mrsp_schedule,
 	.admit_task           = mrsp_admit_task,
 	.activate_plugin      = mrsp_activate_plugin,
 	.deactivate_plugin    = mrsp_deactivate_plugin,
