@@ -810,8 +810,12 @@ void mrsp_fmlp_free(struct yat_lock* lock) {
 	kfree(fmlp_from_lock(lock));
 }
 
-static struct yat_lock_ops mrsp_fmlp_lock_ops =
-	{ .close = mrsp_fmlp_close, .lock = mrsp_fmlp_lock, .unlock = mrsp_fmlp_unlock, .deallocate = mrsp_fmlp_free, };
+static struct yat_lock_ops mrsp_fmlp_lock_ops = {
+	.close      = mrsp_fmlp_close,
+	.lock       = mrsp_fmlp_lock,
+	.unlock     = mrsp_fmlp_unlock,
+	.deallocate = mrsp_fmlp_free,
+};
 
 static struct yat_lock* mrsp_new_fmlp(void) {
 	struct fmlp_semaphore* sem;
@@ -961,8 +965,7 @@ int mrsp_mpcp_lock(struct yat_lock* l) {
 
 		__add_wait_queue_prio_exclusive(&sem->wait, &wait);
 
-		TS_LOCK_SUSPEND
-		;
+		TS_LOCK_SUSPEND;
 
 		/* release lock before sleeping */
 		spin_unlock_irqrestore(&sem->wait.lock, flags);
@@ -1079,8 +1082,13 @@ void mrsp_mpcp_free(struct yat_lock* lock) {
 	kfree(mpcp_from_lock(lock));
 }
 
-static struct yat_lock_ops mrsp_mpcp_lock_ops = { .close = mrsp_mpcp_close, .lock = mrsp_mpcp_lock, .open = mrsp_mpcp_open, .unlock = mrsp_mpcp_unlock,
-	.deallocate = mrsp_mpcp_free, };
+static struct yat_lock_ops mrsp_mpcp_lock_ops = {
+	.close      = mrsp_mpcp_close,
+	.lock       = mrsp_mpcp_lock,
+	.open       = mrsp_mpcp_open,
+	.unlock     = mrsp_mpcp_unlock,
+	.deallocate = mrsp_mpcp_free,
+};
 
 static struct yat_lock* mrsp_new_mpcp(int vspin) {
 	struct mpcp_semaphore* sem;
@@ -1460,7 +1468,11 @@ void mrsp_pcp_free(struct yat_lock* lock) {
 	kfree(pcp_from_lock(lock));
 }
 
-static struct yat_lock_ops mrsp_pcp_lock_ops = { .close = mrsp_pcp_close, .lock = mrsp_pcp_lock, .open = mrsp_pcp_open, .unlock = mrsp_pcp_unlock,
+static struct yat_lock_ops mrsp_pcp_lock_ops = {
+	.close      = mrsp_pcp_close,
+	.lock       = mrsp_pcp_lock,
+	.open       = mrsp_pcp_open,
+	.unlock     = mrsp_pcp_unlock,
 	.deallocate = mrsp_pcp_free, };
 
 static struct yat_lock* mrsp_new_pcp(int on_cpu) {
@@ -2221,10 +2233,15 @@ void mrsp_free(struct yat_lock* lock) {
 	kfree(sem);
 }
 
-static struct yat_lock_ops mrsp_lock_ops = { .close = mrsp_close, .lock = mrsp_lock, .open = mrsp_open, .unlock = mrsp_unlock, .deallocate = mrsp_free, };
+static struct yat_lock_ops mrsp_lock_ops = {
+	.close      = mrsp_close,
+	.lock       = mrsp_lock,
+	.open       = mrsp_open,
+	.unlock     = mrsp_unlock,
+	.deallocate = mrsp_free,
+};
 
-static struct yat_lock*
-new_mrsp(int* config) {
+static struct yat_lock* new_mrsp(int* config) {
 	struct mrsp_semaphore* sem;
 	int i = 0;
 	sem = kmalloc(sizeof(*sem), GFP_KERNEL);
