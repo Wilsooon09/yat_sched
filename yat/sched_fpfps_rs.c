@@ -150,7 +150,6 @@ static void job_completion(struct task_struct* t, int forced) {
 }
 struct task_list * task_remove(struct task_struct* task, struct list_head *head);
 
-// manually unrolled
 inline static struct task_struct* get_high_priority_mrsp_task(int start_index) {
 	int i;
 	for (i = start_index; i < start_index + YAT_MAX_PRIORITY; i++) {
@@ -2606,135 +2605,135 @@ static long mrsp_allocate_lock(struct yat_lock **lock, int type, void* __user co
 	/* P-FP currently supports the SRP for local resources and the FMLP
 	 * for global resources. */
 	switch (type) {
-	case FMLP_SEM:
-		/* FIFO Mutex Locking Protocol */
-		*lock = mrsp_new_fmlp();
-		if (*lock)
-			err = 0;
-		else
-			err = -ENOMEM;
-		break;
+		case FMLP_SEM:
+			/* FIFO Mutex Locking Protocol */
+			*lock = mrsp_new_fmlp();
+			if (*lock)
+				err = 0;
+			else
+				err = -ENOMEM;
+			break;
 
-	case MPCP_SEM:
-		/* Multiprocesor Priority Ceiling Protocol */
-		*lock = mrsp_new_mpcp(0);
-		if (*lock)
-			err = 0;
-		else
-			err = -ENOMEM;
-		break;
+		case MPCP_SEM:
+			/* Multiprocesor Priority Ceiling Protocol */
+			*lock = mrsp_new_mpcp(0);
+			if (*lock)
+				err = 0;
+			else
+				err = -ENOMEM;
+			break;
 
-	case MPCP_VS_SEM:
-		/* Multiprocesor Priority Ceiling Protocol with virtual spinning */
-		*lock = mrsp_new_mpcp(1);
-		if (*lock)
-			err = 0;
-		else
-			err = -ENOMEM;
-		break;
+		case MPCP_VS_SEM:
+			/* Multiprocesor Priority Ceiling Protocol with virtual spinning */
+			*lock = mrsp_new_mpcp(1);
+			if (*lock)
+				err = 0;
+			else
+				err = -ENOMEM;
+			break;
 
-	case DPCP_SEM:
-		/* Distributed Priority Ceiling Protocol */
-		if (get_user(cpu, (int* ) config))
-			return -EFAULT;
+		case DPCP_SEM:
+			/* Distributed Priority Ceiling Protocol */
+			if (get_user(cpu, (int* ) config))
+				return -EFAULT;
 
-		TRACE("DPCP_SEM: provided cpu=%d\n", cpu);
+			TRACE("DPCP_SEM: provided cpu=%d\n", cpu);
 
-		if (cpu >= NR_CPUS || !cpu_online(cpu))
-			return -EINVAL;
+			if (cpu >= NR_CPUS || !cpu_online(cpu))
+				return -EINVAL;
 
-		*lock = mrsp_new_dpcp(cpu);
-		if (*lock)
-			err = 0;
-		else
-			err = -ENOMEM;
-		break;
+			*lock = mrsp_new_dpcp(cpu);
+			if (*lock)
+				err = 0;
+			else
+				err = -ENOMEM;
+			break;
 
-	case DFLP_SEM:
-		/* Distributed FIFO Locking Protocol */
-		if (get_user(cpu, (int* ) config))
-			return -EFAULT;
+		case DFLP_SEM:
+			/* Distributed FIFO Locking Protocol */
+			if (get_user(cpu, (int* ) config))
+				return -EFAULT;
 
-		TRACE("DPCP_SEM: provided cpu=%d\n", cpu);
+			TRACE("DPCP_SEM: provided cpu=%d\n", cpu);
 
-		if (cpu >= NR_CPUS || !cpu_online(cpu))
-			return -EINVAL;
+			if (cpu >= NR_CPUS || !cpu_online(cpu))
+				return -EINVAL;
 
-		*lock = mrsp_new_dflp(cpu);
-		if (*lock)
-			err = 0;
-		else
-			err = -ENOMEM;
-		break;
+			*lock = mrsp_new_dflp(cpu);
+			if (*lock)
+				err = 0;
+			else
+				err = -ENOMEM;
+			break;
 
-	case SRP_SEM:
-		/* Baker's Stack Resource Policy */
-		srp = allocate_srp_semaphore();
-		if (srp) {
-			*lock = &srp->yat_lock;
-			err = 0;
-		} else
-			err = -ENOMEM;
-		break;
+		case SRP_SEM:
+			/* Baker's Stack Resource Policy */
+			srp = allocate_srp_semaphore();
+			if (srp) {
+				*lock = &srp->yat_lock;
+				err = 0;
+			} else
+				err = -ENOMEM;
+			break;
 
-	case PCP_SEM:
-		/* Priority Ceiling Protocol */
-		if (!config)
-			cpu = get_partition(current);
-		else if (get_user(cpu, (int* ) config))
-			return -EFAULT;
+		case PCP_SEM:
+			/* Priority Ceiling Protocol */
+			if (!config)
+				cpu = get_partition(current);
+			else if (get_user(cpu, (int* ) config))
+				return -EFAULT;
 
-		if (cpu >= NR_CPUS || !cpu_online(cpu))
-			return -EINVAL;
+			if (cpu >= NR_CPUS || !cpu_online(cpu))
+				return -EINVAL;
 
-		*lock = mrsp_new_pcp(cpu);
-		if (*lock)
-			err = 0;
-		else
-			err = -ENOMEM;
-		break;
+			*lock = mrsp_new_pcp(cpu);
+			if (*lock)
+				err = 0;
+			else
+				err = -ENOMEM;
+			break;
 
-	case MRSP_SEM:
+		case MRSP_SEM:
 
-		if (!config)
-			return -EFAULT;
+			if (!config)
+				return -EFAULT;
 
-		prio_per_cpu = (int*) config;
+			prio_per_cpu = (int*) config;
 
-		if (!prio_per_cpu)
-			return -EFAULT;
+			if (!prio_per_cpu)
+				return -EFAULT;
 
-		*lock = new_mrsp(prio_per_cpu);
+			*lock = new_mrsp(prio_per_cpu);
 
-		if (*lock)
-			err = 0;
-		else
-			err = -ENOMEM;
-		break;
+			if (*lock)
+				err = 0;
+			else
+				err = -ENOMEM;
+			break;
 
-	case MSRP_SEM:
-		if (!config)
-			return -EFAULT;
+		case MSRP_SEM:
+			if (!config)
+				return -EFAULT;
 
-		*lock = new_msrp((int*) config);
+			*lock = new_msrp((int*) config);
 
-		if (*lock)
-			err = 0;
-		else
-			err = -ENOMEM;
-		break;
+			if (*lock)
+				err = 0;
+			else
+				err = -ENOMEM;
+			break;
 
-	case FIFOP_SEM:
-		if (!config)
-			return -EFAULT;
+		case FIFOP_SEM:
+			if (!config)
+				return -EFAULT;
 
-		*lock = new_fifop((int*) config);
+			*lock = new_fifop((int*) config);
 
-		if (*lock)
-			err = 0;
-		else
-			err = -ENOMEM;
-		break;
+			if (*lock)
+				err = 0;
+			else
+				err = -ENOMEM;
+			break;
 
 	};
 
